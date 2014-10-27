@@ -27,6 +27,8 @@ const (
 	o_sub
 )
 
+var chemicalConstants = make(map[string]*pcalc.Expression)
+var physicalConstants = make(map[string]*pcalc.Expression)
 var userVars = make(map[string]*pcalc.Expression)
 var standardFuncs = make(map[string]*pcalc.Expression)
 var selectedNamespace = &userVars
@@ -34,8 +36,8 @@ var selectedNamespace = &userVars
 //Parse expressions in the following order
 var nonfuncParRe = regexp.MustCompile(`([^\pL\pN]|^)\(`)
 var stdfuncParRE = regexp.MustCompile(`^.[\pL\pN]+\(`)
-var nsfuncRE = regexp.MustCompile(`([\pN]*[\pL]+[\pN]*){0,}\.([\pN]*[\pL]+[\pN]*){1,}`)
-var unknownRE = regexp.MustCompile(`([\pN]*[\pL]+[\pN]*){1,}`)
+var nsfuncRE = regexp.MustCompile(`([\pL]+[\pN]*){0,}\.([\pL]+[\pN]*){1,}`)
+var unknownRE = regexp.MustCompile(`([\pL]+[\pN]*){1,}`)
 var sdFloatRE = regexp.MustCompile(`([\pN]+\.[\pN]*)|([\pN]*\.[\pN]+)`)
 var intRE = regexp.MustCompile(`[\pN]+`)
 
@@ -57,6 +59,16 @@ func main() {
 func setupConstantExps() {
 	standardFuncs["ln"] = pcalc.NaturalLogarithmOfExpression(pcalc.NewExpressionWithUnknown("a"))
 	standardFuncs["lg"] = pcalc.DecimalLogarithmOfExpression(pcalc.NewExpressionWithUnknown("a"))
+
+	chemicalConstants["R"] = pcalc.NewExpressionWithConstant(pcalc.MakeSDFloat(8.3144, 5))
+	chemicalConstants["r"] = chemicalConstants["R"]
+	chemicalConstants["F"] = pcalc.NewExpressionWithConstant(pcalc.MakeSDFloat(96485.33, 7))
+	chemicalConstants["f"] = chemicalConstants["F"]
+
+	physicalConstants["C"] = pcalc.NewExpressionWithConstant(pcalc.MakeSDFloat(299792458, 9))
+	physicalConstants["c"] = physicalConstants["C"]
+	physicalConstants["G"] = pcalc.NewExpressionWithConstant(pcalc.MakeSDFloat(9.80665, 6))
+	physicalConstants["g"] = physicalConstants["G"]
 }
 
 func parseLine(line string) bool {
@@ -168,8 +180,11 @@ func parseExpression(s string) *pcalc.Expression {
 		lasti = values[i].inds[1]
 	}
 	for i, v := range opStrings {
-		fields := strings.Split(v, "")
 		foundOp := -1
+		if len(v) == 0 && i != 0 {
+			foundOp = o_mul
+		}
+		fields := strings.Split(v, "")
 		for _, c := range fields {
 			if c == " " {
 				continue
@@ -259,7 +274,7 @@ func parseExpression(s string) *pcalc.Expression {
 		if v := operators[i]; v == o_add {
 			ne = pcalc.AddExpressions(exps[i-1], exps[i])
 		} else if v == o_sub {
-			ne = pcalc.SubtractExpressions(exps[i-1], pcalc.SignInvertedExpression(exps[i]))
+			ne = pcalc.SubtractExpressions(exps[i-1], exps[i])
 		}
 		exps = append(exps[:i], exps[i+1:]...)
 		exps[i-1] = ne
