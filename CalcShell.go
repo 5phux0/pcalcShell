@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"math"
 	"os"
 	"pcalc"
 	"regexp"
@@ -27,6 +28,7 @@ const (
 	o_sub
 )
 
+var mathematicalConstants = make(map[string]*pcalc.Expression)
 var chemicalConstants = make(map[string]*pcalc.Expression)
 var physicalConstants = make(map[string]*pcalc.Expression)
 var userVars = make(map[string]*pcalc.Expression)
@@ -69,6 +71,9 @@ func setupConstantExps() {
 	physicalConstants["c"] = physicalConstants["C"]
 	physicalConstants["G"] = pcalc.NewExpressionWithConstant(pcalc.MakeSDFloat(9.80665, 6))
 	physicalConstants["g"] = physicalConstants["G"]
+
+	mathematicalConstants["pi"] = pcalc.NewExpressionWithConstant(pcalc.MakeSDFloat(math.Pi, 15))
+	mathematicalConstants["e"] = pcalc.NewExpressionWithConstant(pcalc.MakeSDFloat(math.E, 15))
 }
 
 func parseLine(line string) bool {
@@ -77,7 +82,15 @@ func parseLine(line string) bool {
 		return true
 	}
 
-	if ind := strings.Index(s, "<<"); ind != -1 {
+	if ind := strings.Index(s, "list "); ind != -1 {
+		vn := fmt.Sprintf("%c%v", s[ind+5], ".")
+		ns, _ := parseVarName(vn)
+		if ns != nil {
+			for k, v := range *ns {
+				fmt.Printf("%v=%v\n", k, v.Description())
+			}
+		}
+	} else if ind := strings.Index(s, "<<"); ind != -1 {
 		ns, key := parseVarName(s[:ind])
 		exp := parseExpression(s[ind+2:])
 		if exp != nil {
@@ -117,6 +130,12 @@ func parseVarName(s string) (nameSpace *map[string]*pcalc.Expression, key string
 			nameSpace = selectedNamespace
 		case "u":
 			nameSpace = &userVars
+		case "m":
+			nameSpace = &mathematicalConstants
+		case "c":
+			nameSpace = &chemicalConstants
+		case "p":
+			nameSpace = &physicalConstants
 		default:
 			fmt.Printf("Invalid namespace:%s\n", fields[0])
 		}
