@@ -9,6 +9,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"unicode"
 )
 
 type pElement struct {
@@ -36,7 +37,7 @@ var standardFuncs = make(map[string]*pcalc.Expression)
 var selectedNamespace = &userVars
 
 //Parse expressions in the following order
-var nonfuncParRe = regexp.MustCompile(`([^\pL\pN]|^)\(`)
+var nonfuncParRe = regexp.MustCompile(`([\pN]*)\(`)
 var stdfuncParRE = regexp.MustCompile(`^.[\pL\pN]+\(`)
 var nsfuncRE = regexp.MustCompile(`([\pL]+[\pN]*){0,}\.([\pL]+[\pN]*){1,}`)
 var unknownRE = regexp.MustCompile(`([\pL]+[\pN]*){1,}`)
@@ -311,6 +312,8 @@ func parseParenthesisEnclosedExpressions(s string, starti int) []pElement {
 	ret := make([]pElement, 0)
 	ind := nonfuncParRe.FindStringIndex(s)
 	if len(ind) == 0 {
+		ret = nextParseFunction(s, starti)
+	} else if ind[0] != 0 && unicode.IsLetter(rune(s[ind[0]-1])) {
 		ret = nextParseFunction(s, starti)
 	} else {
 		si := ind[0]
