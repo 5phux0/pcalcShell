@@ -10,10 +10,10 @@ Current features:
 *  Calculations return values with the correct order of significant digits !!!!BUG!!!!
   
 Planed features:
-  Graph drawing and perhaps some other types of analysis features
-  Read values written on scientific notation
-  Handle lists and sets of values
+*  Graph drawing and perhaps some other types of analysis features
+*  Read values written on scientific notation
+*  Handle lists and sets of values
   
 Bugs:
-  Floats are sometimes printed with the wrong number of significant digits.
-  Expressions called with arguments containing parenthesis enclosed ',' wont parse correctly
+*  Floats are sometimes printed with the wrong number of significant digits.
+*  Expressions called with arguments containing parenthesis enclosed ',' wont parse correctly
